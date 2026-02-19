@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Alert - BTC/ETH Price Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glow-btc { box-shadow: 0 0 30px rgba(247, 147, 26, 0.3); }
+        .glow-eth { box-shadow: 0 0 30px rgba(98, 126, 234, 0.3); }
+        .price-up { color: #10b981; }
+        .price-down { color: #ef4444; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-chart-line text-2xl text-yellow-500"></i>
+                <h1 class="text-xl font-bold">Crypto Alert</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full pulse"></span>
+                <span class="text-sm text-gray-400">Live</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Price Cards -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <!-- Bitcoin Card -->
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700 glow-btc hover:scale-[1.02] transition-transform">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center">
+                            <i class="fab fa-bitcoin text-2xl text-orange-500"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg">Bitcoin</h2>
+                            <span class="text-gray-400 text-sm">BTC</span>
+                        </div>
+                    </div>
+                    <span id="btc-change" class="px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-400">+0.00%</span>
+                </div>
+                <div class="mb-4">
+                    <span class="text-3xl font-bold" id="btc-price">$0.00</span>
+                    <p class="text-gray-400 text-sm mt-1">24h Volume: <span id="btc-volume">$0</span></p>
+                </div>
+                <div class="h-32">
+                    <canvas id="btc-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Ethereum Card -->
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700 glow-eth hover:scale-[1.02] transition-transform">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                            <i class="fab fa-ethereum text-2xl text-indigo-400"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg">Ethereum</h2>
+                            <span class="text-gray-400 text-sm">ETH</span>
+                        </div>
+                    </div>
+                    <span id="eth-change" class="px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-400">+0.00%</span>
+                </div>
+                <div class="mb-4">
+                    <span class="text-3xl font-bold" id="eth-price">$0.00</span>
+                    <p class="text-gray-400 text-sm mt-1">24h Volume: <span id="eth-volume">$0</span></p>
+                </div>
+                <div class="h-32">
+                    <canvas id="eth-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Alert Section -->
+        <div class="bg-gray-800/50 rounded-2xl p-6 border border-gray-700 mb-8">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-bell text-yellow-500"></i>
+                Set Price Alert
+            </h3>
+            <div class="grid md:grid-cols-4 gap-4">
+                <select id="alert-coin" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    <option value="bitcoin">Bitcoin (BTC)</option>
+                    <option value="ethereum">Ethereum (ETH)</option>
+                </select>
+                <select id="alert-condition" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    <option value="above">Price Above</option>
+                    <option value="below">Price Below</option>
+                </select>
+                <input type="number" id="alert-price" placeholder="Enter price (USD)" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                <button onclick="setAlert()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold rounded-lg px-6 py-3 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Add Alert
+                </button>
+            </div>
+            <!-- Active Alerts -->
+            <div id="alerts-container" class="mt-4 space-y-2"></div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">BTC Market Cap</p>
+                <p class="text-xl font-bold" id="btc-mcap">$0</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">ETH Market Cap</p>
+                <p class="text-xl font-bold" id="eth-mcap">$0</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">BTC 24h High</p>
+                <p class="text-xl font-bold text-green-400" id="btc-high">$0</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">BTC 24h Low</p>
+                <p class="text-xl font-bold text-red-400" id="btc-low">$0</p>
+            </div>
+        </div>
+
+        <!-- Last Updated -->
+        <div class="text-center text-gray-500 text-sm">
+            <p>Last updated: <span id="last-updated">-</span></p>
+            <p class="mt-1">Data from CoinGecko API • Auto-refreshes every 30s</p>
+        </div>
+    </main>
+
+    <!-- Alert Notification -->
+    <div id="notification" class="fixed bottom-4 right-4 bg-yellow-500 text-gray-900 px-6 py-4 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
+        <i class="fas fa-bell text-xl"></i>
+        <span id="notification-text">Alert triggered!</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
